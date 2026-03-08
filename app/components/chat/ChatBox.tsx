@@ -19,8 +19,6 @@ import {
   type ScrubberState,
 } from "../timeline/types";
 import { cn } from "~/lib/utils";
-import axios from "axios";
-import { apiUrl } from "~/utils/api";
 
 // llm tools
 import {
@@ -29,6 +27,10 @@ import {
   llmAddScrubberByName,
   llmDeleteScrubbersInTrack,
 } from "~/utils/llm-handler";
+
+// Gemini AI service
+import { callGeminiAI } from "~/utils/gemini";
+import type { FunctionCallResponse } from "~/utils/gemini-schemas";
 
 interface Message {
   id: string;
@@ -233,23 +235,21 @@ export function ChatBox({
       // Use the stored mentioned items to get their IDs
       const mentionedScrubberIds = itemsToSend.map((item) => item.id);
 
-      // Build short chat history to give context to the backend
-      const history = messages.slice(-10).map((m) => ({
+      // Build short chat history to give context to the AI
+      const history: Array<{ role: "user" | "assistant"; content: string; timestamp: Date }> = messages.slice(-10).map((m) => ({
         role: m.isUser ? "user" : "assistant",
         content: m.content,
         timestamp: m.timestamp,
       }));
 
-      // Make API call to the backend
-      const response = await axios.post(apiUrl("/ai", true), {
+      // Call Gemini AI directly
+      const functionCallResponse = await callGeminiAI({
         message: messageContent,
         mentioned_scrubber_ids: mentionedScrubberIds,
         timeline_state: timelineState,
         mediabin_items: mediaBinItems,
         chat_history: history,
       });
-
-      const functionCallResponse = response.data;
       let aiResponseContent = "";
 
       // Handle the function call based on function_name

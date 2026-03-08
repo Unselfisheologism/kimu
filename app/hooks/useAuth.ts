@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { apiUrl } from "~/utils/api";
+import { legacyApiUrl as apiUrl } from "~/utils/api";
 import { authClient } from "~/lib/auth.client";
 import { useNavigate } from "react-router";
 
