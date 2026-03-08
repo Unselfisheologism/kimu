@@ -68,3 +68,12 @@ learn.json
 .mypy_cache/
 idk.tsx
 idk.ts
+
+# Motion Editor
+# Fabric.js build artifacts
+*.fabric.js
+*.fabric.min.js
+
+# Lottie temp files
+*.lottie
+*.lottie.json.tmp

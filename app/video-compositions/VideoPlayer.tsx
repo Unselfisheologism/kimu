@@ -1,5 +1,5 @@
 import { Player, type PlayerRef } from "@remotion/player";
-import { Sequence, AbsoluteFill, Img, Video, Audio } from "remotion";
+import { Sequence, AbsoluteFill, Img, Video, Audio, useCurrentFrame, interpolate } from "remotion";
 import {
   linearTiming,
   springTiming,
@@ -21,6 +21,8 @@ import {
   type Transition,
 } from "../components/timeline/types";
 import { SortedOutlines, layerContainer, outer } from "./DragDrop";
+import type { MotionGraphicsData, FabricObject } from "~/types/motion";
+import { calculateSceneAtTime } from "~/utils/motion-interpolation";
 
 type TimelineCompositionProps = {
   timelineData: TimelineDataItem[];
@@ -180,6 +182,23 @@ export function TimelineComposition({
             trimBefore={scrubber.trimBefore || undefined}
             trimAfter={scrubber.trimAfter || undefined}
           />
+        );
+        break;
+      }
+      case "motion_graphics": {
+        // Render motion graphics scrubber
+        content = (
+          <AbsoluteFill
+            style={{
+              left: scrubber.left_player,
+              top: scrubber.top_player,
+              width: scrubber.width_player,
+              height: scrubber.height_player,
+              overflow: "hidden",
+            }}
+          >
+            <MotionGraphicsRenderer motionData={scrubber.motionData!} />
+          </AbsoluteFill>
         );
         break;
       }
@@ -542,3 +561,197 @@ export function VideoPlayer({
     />
   );
 }
+
+// Motion Graphics Renderer Component
+// Renders Fabric.js-style objects with keyframe animation using Remotion's interpolate
+interface MotionGraphicsRendererProps {
+  motionData: MotionGraphicsData;
+}
+
+const MotionGraphicsRenderer: React.FC<MotionGraphicsRendererProps> = ({ motionData }) => {
+  const frame = useCurrentFrame();
+  const currentTime = frame / FPS;
+
+  // Calculate interpolated scene
+  const objects = calculateSceneAtTime(motionData, currentTime);
+
+  return (
+    <AbsoluteFill
+      style={{
+        width: motionData.canvasWidth,
+        height: motionData.canvasHeight,
+        backgroundColor: motionData.backgroundColor || "transparent",
+        position: "relative",
+      }}
+    >
+      {objects.map((obj) => (
+        <MotionObject key={obj.id} obj={obj} />
+      ))}
+    </AbsoluteFill>
+  );
+};
+
+// Individual motion object renderer
+interface MotionObjectProps {
+  obj: FabricObject;
+}
+
+const MotionObject: React.FC<MotionObjectProps> = ({ obj }) => {
+  if (!obj.visible) return null;
+
+  const baseStyle: React.CSSProperties = {
+    position: "absolute",
+    left: obj.left,
+    top: obj.top,
+    width: obj.width || 100,
+    height: obj.height || 100,
+    transform: [
+      `scaleX(${obj.scaleX ?? 1})`,
+      `scaleY(${obj.scaleY ?? 1})`,
+      `rotate(${obj.rotation ?? obj.angle ?? 0}deg)`,
+    ].join(" "),
+    opacity: obj.opacity ?? 1,
+    transformOrigin: "center center",
+  };
+
+  switch (obj.type) {
+    case "rect":
+      return (
+        <div
+          style={{
+            ...baseStyle,
+            backgroundColor: obj.fill || "#3b82f6",
+            border: obj.stroke
+              ? `${obj.strokeWidth || 1}px solid ${obj.stroke}`
+              : undefined,
+          }}
+        />
+      );
+
+    case "circle":
+      return (
+        <div
+          style={{
+            ...baseStyle,
+            width: (obj.radius ?? 50) * 2,
+            height: (obj.radius ?? 50) * 2,
+            backgroundColor: obj.fill || "#3b82f6",
+            border: obj.stroke
+              ? `${obj.strokeWidth || 1}px solid ${obj.stroke}`
+              : undefined,
+            borderRadius: "50%",
+          }}
+        />
+      );
+
+    case "ellipse":
+      return (
+        <div
+          style={{
+            ...baseStyle,
+            width: (obj.rx ?? 50) * 2,
+            height: (obj.ry ?? 50) * 2,
+            backgroundColor: obj.fill || "#3b82f6",
+            border: obj.stroke
+              ? `${obj.strokeWidth || 1}px solid ${obj.stroke}`
+              : undefined,
+            borderRadius: "50%",
+          }}
+        />
+      );
+
+    case "triangle":
+      return (
+        <div
+          style={{
+            ...baseStyle,
+            width: 0,
+            height: 0,
+            backgroundColor: "transparent",
+            borderLeft: `${(obj.width || 100) / 2}px solid transparent`,
+            borderRight: `${(obj.width || 100) / 2}px solid transparent`,
+            borderBottom: `${obj.height || 100}px solid ${obj.fill || "#3b82f6"}`,
+          }}
+        />
+      );
+
+    case "text":
+    case "textbox":
+      return (
+        <div
+          style={{
+            ...baseStyle,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: obj.textAlign === "right" ? "flex-end" : obj.textAlign === "center" ? "center" : "flex-start",
+            color: obj.fill || "#ffffff",
+            fontSize: obj.fontSize || 48,
+            fontFamily: obj.fontFamily || "Arial, sans-serif",
+            fontWeight: obj.fontWeight || "normal",
+            fontStyle: obj.fontStyle || "normal",
+            textAlign: obj.textAlign || "left",
+            lineHeight: obj.lineHeight || 1.2,
+            whiteSpace: "pre-wrap",
+          }}
+        >
+          {obj.text}
+        </div>
+      );
+
+    case "image":
+      if (obj.src) {
+        return (
+          <img
+            src={obj.src}
+            alt=""
+            style={{
+              ...baseStyle,
+              objectFit: "cover",
+            }}
+          />
+        );
+      }
+      return null;
+
+    case "line":
+      return (
+        <div
+          style={{
+            ...baseStyle,
+            height: obj.strokeWidth || 2,
+            backgroundColor: obj.stroke || obj.fill || "#3b82f6",
+            transform: `${baseStyle.transform || ""} rotate(${Math.atan2(
+              (obj.height || 0),
+              (obj.width || 100)
+            )}rad)`,
+          }}
+        />
+      );
+
+    case "group":
+      // Render group children
+      if (obj.objects && obj.objects.length > 0) {
+        return (
+          <div style={baseStyle}>
+            {obj.objects.map((child) => (
+              <MotionObject key={child.id} obj={child} />
+            ))}
+          </div>
+        );
+      }
+      return null;
+
+    default:
+      return (
+        <div
+          style={{
+            ...baseStyle,
+            backgroundColor: obj.fill || "#3b82f6",
+            border: obj.stroke
+              ? `${obj.strokeWidth || 1}px solid ${obj.stroke}`
+              : undefined,
+          }}
+        />
+      );
+  }
+};
