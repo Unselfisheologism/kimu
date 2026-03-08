@@ -19,8 +19,7 @@ import {
   type ScrubberState,
 } from "../timeline/types";
 import { cn } from "~/lib/utils";
-import axios from "axios";
-import { apiUrl } from "~/utils/api";
+import { callGeminiAI } from "~/utils/gemini";
 
 // llm tools
 import {
@@ -233,23 +232,21 @@ export function ChatBox({
       // Use the stored mentioned items to get their IDs
       const mentionedScrubberIds = itemsToSend.map((item) => item.id);
 
-      // Build short chat history to give context to the backend
+      // Build short chat history to give context
       const history = messages.slice(-10).map((m) => ({
-        role: m.isUser ? "user" : "assistant",
+        role: (m.isUser ? "user" : "assistant") as "user" | "assistant",
         content: m.content,
         timestamp: m.timestamp,
       }));
 
-      // Make API call to the backend
-      const response = await axios.post(apiUrl("/ai", true), {
+      // Call Gemini API directly
+      const functionCallResponse = await callGeminiAI({
         message: messageContent,
         mentioned_scrubber_ids: mentionedScrubberIds,
         timeline_state: timelineState,
         mediabin_items: mediaBinItems,
         chat_history: history,
       });
-
-      const functionCallResponse = response.data;
       let aiResponseContent = "";
 
       // Handle the function call based on function_name
@@ -322,7 +319,7 @@ export function ChatBox({
             );
             aiResponseContent = `✅ Removed all scrubbers in track ${function_call.track_number}.`;
           } else {
-            aiResponseContent = `❌ Unknown function: ${function_call.function_name}`;
+            aiResponseContent = `❌ Unknown function: ${(function_call as { function_name: string }).function_name}`;
           }
         } catch (error) {
           aiResponseContent = `❌ Error executing function: ${
@@ -345,11 +342,12 @@ export function ChatBox({
 
       onMessagesChange([...messages, userMessage, aiMessage]);
     } catch (error) {
-      console.error("Error calling AI API:", error);
+      console.error("Error calling Gemini AI:", error);
 
+      const errorDetails = error instanceof Error ? error.message : "Unknown error";
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: `❌ Sorry, I encountered an error while processing your request. Please try again.`,
+        content: `❌ Sorry, I encountered an error: ${errorDetails}. Please check your API key configuration and try again.`,
         isUser: false,
         timestamp: new Date(),
       };
