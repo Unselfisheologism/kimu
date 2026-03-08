@@ -19,6 +19,7 @@ services:
       args:
         VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
         VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
+        VITE_GEMINI_API_KEY: ${VITE_GEMINI_API_KEY}
     container_name: videoeditor-frontend
     env_file:
       - .env
@@ -57,8 +58,3 @@ services:
     memswap_limit: 2g
     shm_size: 1g
 
-  fastapi:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: videoeditor-fastapi

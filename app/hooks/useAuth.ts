@@ -83,7 +83,7 @@ export function useAuth(): UseAuthResult {
     // Fetch helpers return undefined on error (so we don't clear user)
     const fetchRestSession = async (): Promise<AuthUser | null | undefined> => {
       try {
-        const sessionUrl = apiUrl("/api/auth/session", false, true);
+        const sessionUrl = apiUrl("/api/auth/session", true);
         const res = await fetch(sessionUrl, {
           credentials: "include",
           headers: {
@@ -231,7 +231,7 @@ export function useAuth(): UseAuthResult {
 
       // Fallback to REST API call with correct endpoint
       // console.log("🔐 Using REST API signIn");
-      // const signInUrl = apiUrl("/api/auth/sign-in/social", false, true);
+      // const signInUrl = apiUrl("/api/auth/sign-in/social", false);
       // console.log("🔐 Sign-in URL:", signInUrl);
       // const response = await fetch(signInUrl, {
       //   method: "POST",
