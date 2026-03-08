@@ -1,7 +1,10 @@
+// Import motion types
+import type { MotionGraphicsData } from "~/types/motion";
+
 // base type for all scrubbers
 export interface BaseScrubber {
   id: string;
-  mediaType: "video" | "image" | "audio" | "text" | "groupped_scrubber";
+  mediaType: "video" | "image" | "audio" | "text" | "groupped_scrubber" | "motion_graphics";
   mediaUrlLocal: string | null; // null for text
   mediaUrlRemote: string | null;
   media_width: number; // width of the media in pixels
@@ -15,6 +18,9 @@ export interface BaseScrubber {
   // for a middle transition, you will only see its information in the left scrubber.
   left_transition_id: string | null; // only use this for the first scrubber intro
   right_transition_id: string | null; // this is what you use everywhere
+
+  // Motion graphics data for motion_graphics scrubber type
+  motionData?: MotionGraphicsData;
 }
 
 export interface Transition {

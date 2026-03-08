@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
   RotateCcw,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import {
@@ -27,6 +28,17 @@ import {
   llmAddScrubberByName,
   llmDeleteScrubbersInTrack,
 } from "~/utils/llm-handler";
+
+// motion llm tools
+import {
+  llmAddShape,
+  llmCreateKeyframe,
+  llmApplyFilter,
+  llmDeleteObject,
+  llmUpdateObject,
+  llmAnimateObject,
+  llmCreateMotionScrubber,
+} from "~/utils/llm-handler-motion";
 
 // Gemini AI service
 import { callGeminiAI } from "~/utils/gemini";
@@ -321,6 +333,90 @@ export function ChatBox({
               handleDeleteScrubber
             );
             aiResponseContent = `✅ Removed all scrubbers in track ${function_call.track_number}.`;
+          } else if (function_call.function_name === "LLMCreateMotionScrubber") {
+            // Create a new motion graphics scrubber
+            llmCreateMotionScrubber(
+              function_call.track_number,
+              function_call.position_seconds,
+              function_call.duration_seconds,
+              function_call.pixels_per_second ?? 100,
+              timelineState,
+              handleDropOnTrack,
+              function_call.canvas_width,
+              function_call.canvas_height,
+              function_call.background_color
+            );
+            aiResponseContent = `✅ Created motion graphics scrubber on track ${function_call.track_number} at ${function_call.position_seconds}s with ${function_call.duration_seconds}s duration.`;
+          } else if (function_call.function_name === "LLMAddShape") {
+            llmAddShape(
+              function_call.scrubber_id,
+              function_call.shape_type,
+              function_call.left,
+              function_call.top,
+              function_call.width,
+              function_call.height,
+              timelineState,
+              handleUpdateScrubber,
+              {
+                fill: function_call.fill,
+                stroke: function_call.stroke,
+                strokeWidth: function_call.stroke_width,
+                text: function_call.text,
+                fontSize: function_call.font_size,
+                fontFamily: function_call.font_family,
+              }
+            );
+            aiResponseContent = `✅ Added ${function_call.shape_type} shape to motion scrubber.`;
+          } else if (function_call.function_name === "LLMCreateKeyframe") {
+            llmCreateKeyframe(
+              function_call.scrubber_id,
+              function_call.object_id,
+              function_call.property,
+              function_call.time,
+              function_call.value,
+              function_call.easing,
+              timelineState,
+              handleUpdateScrubber
+            );
+            aiResponseContent = `✅ Created keyframe for ${function_call.property} at ${function_call.time}s.`;
+          } else if (function_call.function_name === "LLMApplyFilter") {
+            llmApplyFilter(
+              function_call.scrubber_id,
+              function_call.object_id,
+              function_call.filter_type,
+              function_call.value,
+              timelineState,
+              handleUpdateScrubber
+            );
+            aiResponseContent = `✅ Applied ${function_call.filter_type} filter.`;
+          } else if (function_call.function_name === "LLMDeleteObject") {
+            llmDeleteObject(
+              function_call.scrubber_id,
+              function_call.object_id,
+              timelineState,
+              handleUpdateScrubber
+            );
+            aiResponseContent = `✅ Deleted object from motion scrubber.`;
+          } else if (function_call.function_name === "LLMUpdateObject") {
+            llmUpdateObject(
+              function_call.scrubber_id,
+              function_call.object_id,
+              function_call.properties,
+              timelineState,
+              handleUpdateScrubber
+            );
+            aiResponseContent = `✅ Updated object properties.`;
+          } else if (function_call.function_name === "LLMAnimateObject") {
+            const keyframeIds = llmAnimateObject(
+              function_call.scrubber_id,
+              function_call.object_id,
+              function_call.animation_type,
+              function_call.duration,
+              function_call.easing,
+              timelineState,
+              handleUpdateScrubber
+            );
+            aiResponseContent = `✅ Applied ${function_call.animation_type} animation with ${keyframeIds.length} keyframes.`;
           } else {
             aiResponseContent = `❌ Unknown function: ${function_call.function_name}`;
           }
@@ -574,6 +670,8 @@ export function ChatBox({
                     <FileVideo className="h-3 w-3 text-muted-foreground" />
                   ) : item.mediaType === "image" ? (
                     <FileImage className="h-3 w-3 text-muted-foreground" />
+                  ) : item.mediaType === "motion_graphics" ? (
+                    <Sparkles className="h-3 w-3 text-muted-foreground" />
                   ) : (
                     <Type className="h-3 w-3 text-muted-foreground" />
                   )}

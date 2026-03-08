@@ -28,13 +28,16 @@ Inference rules:
 - When the user names media like "twitter" or "twitter header", map that to the closest media in the media bin by name substring match.
 - Prefer LLMAddScrubberByName when the user specifies a name, track number, and time in seconds.
 - If the user asks to remove scrubbers in a specific track, call LLMDeleteScrubbersInTrack with that track number.
+- Motion graphics: Users can create motion graphics scrubbers with shapes, animations, and keyframes. Use LLMCreateMotionScrubber to create a new motion scrubber.
+- For motion editing: Use LLMAddShape to add shapes, LLMCreateKeyframe for animations, LLMAnimateObject for preset animations like fadeIn, bounce, etc.
+- Common motion requests: "add a red circle", "animate this to fade in", "make it bounce", "add keyframe at 2 seconds".
 
 Conversation so far (oldest first): ${JSON.stringify(request.chat_history)}
 
 User message: ${request.message}
 Mentioned scrubber ids: ${JSON.stringify(request.mentioned_scrubber_ids)}
 Timeline state: ${JSON.stringify(request.timeline_state)}
-Media bin items: ${JSON.stringify(request.mediacin_items)}`;
+Media bin items: ${JSON.stringify(request.mediabin_items)}`;
 }
 
 export async function callGeminiAI(request: CallGeminiAIParams): Promise<FunctionCallResponse> {
@@ -64,8 +67,16 @@ export async function callGeminiAI(request: CallGeminiAIParams): Promise<Functio
                   "LLMMoveScrubber",
                   "LLMAddScrubberByName",
                   "LLMDeleteScrubbersInTrack",
+                  "LLMCreateMotionScrubber",
+                  "LLMAddShape",
+                  "LLMCreateKeyframe",
+                  "LLMApplyFilter",
+                  "LLMDeleteObject",
+                  "LLMUpdateObject",
+                  "LLMAnimateObject",
                 ],
               },
+              // Timeline operations
               scrubber_id: { type: "string" },
               track_id: { type: "string" },
               drop_left_px: { type: "number" },
@@ -75,6 +86,36 @@ export async function callGeminiAI(request: CallGeminiAIParams): Promise<Functio
               scrubber_name: { type: "string" },
               track_number: { type: "number" },
               position_seconds: { type: "number" },
+              // Motion operations
+              duration_seconds: { type: "number" },
+              canvas_width: { type: "number" },
+              canvas_height: { type: "number" },
+              background_color: { type: "string" },
+              // Shape operations
+              shape_type: { type: "string", enum: ["rect", "circle", "triangle", "ellipse", "line", "text"] },
+              left: { type: "number" },
+              top: { type: "number" },
+              width: { type: "number" },
+              height: { type: "number" },
+              fill: { type: "string" },
+              stroke: { type: "string" },
+              stroke_width: { type: "number" },
+              text: { type: "string" },
+              font_size: { type: "number" },
+              font_family: { type: "string" },
+              // Keyframe operations
+              object_id: { type: "string" },
+              property: { type: "string", enum: ["x", "y", "scaleX", "scaleY", "rotation", "opacity", "fill", "stroke", "width", "height", "fontSize"] },
+              time: { type: "number" },
+              value: { type: ["number", "string"] },
+              easing: { type: "string", enum: ["linear", "easeIn", "easeOut", "easeInOut", "spring", "bounce", "elastic"] },
+              // Filter operations
+              filter_type: { type: "string", enum: ["blur", "brightness", "contrast", "sepia", "grayscale", "invert"] },
+              // Animation operations
+              animation_type: { type: "string", enum: ["fadeIn", "fadeOut", "slideIn", "slideOut", "scaleIn", "scaleOut", "rotate", "bounce", "pulse", "shake"] },
+              duration: { type: "number" },
+              // Update operations
+              properties: { type: "object" },
             },
             required: ["function_name"],
           },
