@@ -1,8 +1,10 @@
+import type { MotionGraphicsData } from "~/types/motion";
+
 // base type for all scrubbers
 export interface BaseScrubber {
   id: string;
-  mediaType: "video" | "image" | "audio" | "text" | "groupped_scrubber";
-  mediaUrlLocal: string | null; // null for text
+  mediaType: "video" | "image" | "audio" | "text" | "groupped_scrubber" | "motion_graphics";
+  mediaUrlLocal: string | null; // null for text or motion_graphics
   mediaUrlRemote: string | null;
   media_width: number; // width of the media in pixels
   media_height: number; // height of the media in pixels
@@ -10,6 +12,7 @@ export interface BaseScrubber {
   text: TextProperties | null;
   groupped_scrubbers: ScrubberState[] | null; // null for not grouped
   //  groupped_scrubber_transitions: Transition[] | null; // null for no transitions / not groupped scrubbers [this is written to help with deepcopy]
+  motionGraphics: MotionGraphicsData | null; // Motion graphics data for motion_graphics type
 
   // transitions are managed using the right transition id, as in what to add to the right. Convenient to think of. Left one is for the initial transition, first scrubber intro. we won't use it anywhere else.
   // for a middle transition, you will only see its information in the left scrubber.
@@ -45,6 +48,9 @@ export interface MediaBinItem extends BaseScrubber {
   // Upload tracking properties
   uploadProgress: number | null; // 0-100, null when upload complete
   isUploading: boolean; // True while upload is in progress
+
+  // motion graphics properties
+  motionGraphics: MotionGraphicsData | null; // Motion graphics data
 }
 
 // state of the scrubber in the timeline

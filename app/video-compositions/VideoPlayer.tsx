@@ -1,4 +1,4 @@
-import { Player, type PlayerRef } from "@remotion/player";
+import { Player, type PlayerRef, useCurrentFrame } from "@remotion/player";
 import { Sequence, AbsoluteFill, Img, Video, Audio } from "remotion";
 import {
   linearTiming,
@@ -21,6 +21,9 @@ import {
   type Transition,
 } from "../components/timeline/types";
 import { SortedOutlines, layerContainer, outer } from "./DragDrop";
+import type { MotionGraphicsData } from "~/types/motion";
+import { getInterpolatedValue } from "~/utils/motion-interpolation";
+import { generateUUID } from "~/utils/uuid";
 
 type TimelineCompositionProps = {
   timelineData: TimelineDataItem[];
@@ -88,108 +91,6 @@ export function TimelineComposition({
       (a, b) => a.content.startTime - b.content.startTime
     );
   }
-
-  // Helper function to create media content
-  const createMediaContent = (scrubber: TimelineDataItem['scrubbers'][0] | ScrubberState): React.ReactNode => {
-    let content: React.ReactNode = null;
-
-    switch (scrubber.mediaType) {
-      case "text":
-        content = (
-          <AbsoluteFill
-            style={{
-              left: scrubber.left_player,
-              top: scrubber.top_player,
-              width: scrubber.width_player,
-              height: scrubber.height_player,
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-            <div
-              style={{
-                textAlign: scrubber.text?.textAlign || "center",
-                width: "100%",
-              }}
-            >
-              <p
-                style={{
-                  color: scrubber.text?.color || "white",
-                  fontSize: scrubber.text?.fontSize
-                    ? `${scrubber.text.fontSize}px`
-                    : "48px",
-                  fontFamily: scrubber.text?.fontFamily || "Arial, sans-serif",
-                  fontWeight: scrubber.text?.fontWeight || "normal",
-                  margin: 0,
-                  padding: "20px",
-                }}
-              >
-                {scrubber.text?.textContent || ""}
-              </p>
-            </div>
-          </AbsoluteFill>
-        );
-        break;
-      case "image": {
-        const imageUrl = isRendering
-          ? scrubber.mediaUrlRemote || scrubber.mediaUrlLocal
-          : scrubber.mediaUrlLocal || scrubber.mediaUrlRemote;
-        content = (
-          <AbsoluteFill
-            style={{
-              left: scrubber.left_player,
-              top: scrubber.top_player,
-              width: scrubber.width_player,
-              height: scrubber.height_player,
-            }}
-          >
-            <Img src={imageUrl!} />
-          </AbsoluteFill>
-        );
-        break;
-      }
-      case "video": {
-        const videoUrl = isRendering
-          ? scrubber.mediaUrlRemote || scrubber.mediaUrlLocal
-          : scrubber.mediaUrlLocal || scrubber.mediaUrlRemote;
-        content = (
-          <AbsoluteFill
-            style={{
-              left: scrubber.left_player,
-              top: scrubber.top_player,
-              width: scrubber.width_player,
-              height: scrubber.height_player,
-            }}
-          >
-            <Video
-              src={videoUrl!}
-              trimBefore={scrubber.trimBefore || undefined}
-              trimAfter={scrubber.trimAfter || undefined}
-            />
-          </AbsoluteFill>
-        );
-        break;
-      }
-      case "audio": {
-        const audioUrl = isRendering
-          ? scrubber.mediaUrlRemote || scrubber.mediaUrlLocal
-          : scrubber.mediaUrlLocal || scrubber.mediaUrlRemote;
-        content = (
-          <Audio
-            src={audioUrl!}
-            trimBefore={scrubber.trimBefore || undefined}
-            trimAfter={scrubber.trimAfter || undefined}
-          />
-        );
-        break;
-      }
-      default:
-        console.warn(`Unknown media type: ${scrubber.mediaType}`);
-        break;
-    }
-
-    return content;
-  };
 
   // Helper function to get transition presentation
   const getTransitionPresentation = (transition: Transition) => {
