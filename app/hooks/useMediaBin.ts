@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from "react"
 import axios from "axios"
 import { type MediaBinItem, type ScrubberState } from "~/components/timeline/types"
 import { generateUUID } from "~/utils/uuid"
-import { apiUrl } from "~/utils/api"
+import { legacyApiUrl as apiUrl } from "~/utils/api"
 
 // Delete media file from server
 export const deleteMediaFile = async (

@@ -1,18 +1,21 @@
-export const getApiBaseUrl = (fastapi: boolean = false, betterauth: boolean = false): string => {
+export const getApiBaseUrl = (betterauth: boolean = false): string => {
   const isProduction = process.env.NODE_ENV === "production";
 
   if (betterauth) {
     return isProduction ? "https://trykimu.com" : "http://localhost:5173";  // frontend  NOTE: this will be deleted, it is repeating logic. It'll be the default.
-  } else if (fastapi) {
-    return isProduction ? "https://trykimu.com/ai/api" : "http://127.0.0.1:3000";  // fastapi backend
   } else {
     return isProduction ? "https://trykimu.com/render" : "http://localhost:8000";   // remotion render server
   }
 };
 
-export const apiUrl = (endpoint: string, fastapi: boolean = false, betterauth: boolean = false): string => {
-  const baseUrl = getApiBaseUrl(fastapi, betterauth);
+export const apiUrl = (endpoint: string, betterauth: boolean = false): string => {
+  const baseUrl = getApiBaseUrl(betterauth);
   const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
 
   return path ? `${baseUrl}${path}` : `${baseUrl}`;
+};
+
+// Keep the old function signature for backward compatibility during migration
+export const legacyApiUrl = (endpoint: string, _fastapi: boolean = false, betterauth: boolean = false): string => {
+  return apiUrl(endpoint, betterauth);
 };
