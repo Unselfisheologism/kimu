@@ -422,7 +422,23 @@ export function ChatBox({
             );
             aiResponseContent = `✅ Applied ${function_call.animation_type} animation with ${keyframeIds.length} keyframes.`;
           } else if (function_call.function_name === "WriteRemotionCode") {
-            // Create Remotion code data structure
+            // Import the enhanced Remotion skill system
+            const { generateRemotionCode, detectSkills, getSkillGuidance } = await import("~/remotion/skills");
+            
+            // Detect skills from description
+            const detectedSkills = function_call.detected_skills || detectSkills(function_call.description);
+            
+            // Generate comprehensive Remotion code using the skill system
+            const generatedCode = generateRemotionCode(
+              function_call.description,
+              function_call.composition_name,
+              function_call.duration_in_frames,
+              function_call.width || 1920,
+              function_call.height || 1080,
+              function_call.fps || 30
+            );
+            
+            // Create Remotion code data structure with generated code
             const codeData = llmWriteRemotionCode(
               function_call.description,
               function_call.composition_name,
@@ -430,35 +446,16 @@ export function ChatBox({
               function_call.width,
               function_call.height,
               function_call.fps,
-              function_call.detected_skills
+              detectedSkills
             );
             
-            // Store the generated code from the description
-            // The AI will provide the code in a follow-up or we use the description to generate it
-            // For now, we'll add a placeholder message and let the user know the code will be generated
-            codeData.code = `// Remotion code for: ${function_call.description}
-// Composition: ${function_call.composition_name}
-// Duration: ${function_call.duration_in_frames} frames at ${function_call.fps || 30}fps
-// Dimensions: ${function_call.width || 1920}x${function_call.height || 1080}
-
-import { AbsoluteFill, useCurrentFrame, interpolate, spring, Sequence } from 'remotion';
-
-export function ${function_call.composition_name.replace(/\s+/g, '') }() {
-  const frame = useCurrentFrame();
-  
-  // Add your animation code here based on: ${function_call.description}
-  
-  return (
-    <AbsoluteFill style={{ backgroundColor: '#000' }}>
-      {/* Your animated content goes here */}
-    </AbsoluteFill>
-  );
-}`;
+            // Store the generated code
+            codeData.code = generatedCode;
             
             // Add to media bin
             llmAddRemotionCodeToMediaBin(codeData, setMediaBinItems, mediaBinItems);
             
-            aiResponseContent = `✅ Created Remotion code composition "${function_call.composition_name}" (${function_call.duration_in_frames} frames). It's now in your media bin. You can drag it to the timeline or edit the code.`;
+            aiResponseContent = `✅ Created Remotion code composition "${function_call.composition_name}" (${function_call.duration_in_frames} frames) with skills: ${detectedSkills.join(', ')}. It's now in your media bin. You can drag it to the timeline to preview or edit the code.`;
           } else {
             // Handle any other function calls not covered above
             const fnName = (function_call as { function_name?: string }).function_name || "unknown";
