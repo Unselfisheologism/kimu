@@ -27,6 +27,8 @@ import {
   llmMoveScrubber,
   llmAddScrubberByName,
   llmDeleteScrubbersInTrack,
+  llmWriteRemotionCode,
+  llmAddRemotionCodeToMediaBin,
 } from "~/utils/llm-handler";
 
 // motion llm tools
@@ -54,6 +56,7 @@ interface Message {
 interface ChatBoxProps {
   className?: string;
   mediaBinItems: MediaBinItem[];
+  setMediaBinItems: (items: MediaBinItem[]) => void;
   handleDropOnTrack: (
     item: MediaBinItem,
     trackId: string,
@@ -71,6 +74,7 @@ interface ChatBoxProps {
 export function ChatBox({
   className = "",
   mediaBinItems,
+  setMediaBinItems,
   handleDropOnTrack,
   isMinimized = false,
   onToggleMinimize,
@@ -374,7 +378,7 @@ export function ChatBox({
               function_call.property,
               function_call.time,
               function_call.value,
-              function_call.easing,
+              function_call.easing || "linear",
               timelineState,
               handleUpdateScrubber
             );
@@ -417,8 +421,48 @@ export function ChatBox({
               handleUpdateScrubber
             );
             aiResponseContent = `✅ Applied ${function_call.animation_type} animation with ${keyframeIds.length} keyframes.`;
+          } else if (function_call.function_name === "WriteRemotionCode") {
+            // Create Remotion code data structure
+            const codeData = llmWriteRemotionCode(
+              function_call.description,
+              function_call.composition_name,
+              function_call.duration_in_frames,
+              function_call.width,
+              function_call.height,
+              function_call.fps,
+              function_call.detected_skills
+            );
+            
+            // Store the generated code from the description
+            // The AI will provide the code in a follow-up or we use the description to generate it
+            // For now, we'll add a placeholder message and let the user know the code will be generated
+            codeData.code = `// Remotion code for: ${function_call.description}
+// Composition: ${function_call.composition_name}
+// Duration: ${function_call.duration_in_frames} frames at ${function_call.fps || 30}fps
+// Dimensions: ${function_call.width || 1920}x${function_call.height || 1080}
+
+import { AbsoluteFill, useCurrentFrame, interpolate, spring, Sequence } from 'remotion';
+
+export function ${function_call.composition_name.replace(/\s+/g, '') }() {
+  const frame = useCurrentFrame();
+  
+  // Add your animation code here based on: ${function_call.description}
+  
+  return (
+    <AbsoluteFill style={{ backgroundColor: '#000' }}>
+      {/* Your animated content goes here */}
+    </AbsoluteFill>
+  );
+}`;
+            
+            // Add to media bin
+            llmAddRemotionCodeToMediaBin(codeData, setMediaBinItems, mediaBinItems);
+            
+            aiResponseContent = `✅ Created Remotion code composition "${function_call.composition_name}" (${function_call.duration_in_frames} frames). It's now in your media bin. You can drag it to the timeline or edit the code.`;
           } else {
-            aiResponseContent = `❌ Unknown function: ${function_call.function_name}`;
+            // Handle any other function calls not covered above
+            const fnName = (function_call as { function_name?: string }).function_name || "unknown";
+            aiResponseContent = `❌ Unknown function: ${fnName}`;
           }
         } catch (error) {
           aiResponseContent = `❌ Error executing function: ${

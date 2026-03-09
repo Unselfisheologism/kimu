@@ -32,6 +32,16 @@ Inference rules:
 - For motion editing: Use LLMAddShape to add shapes, LLMCreateKeyframe for animations, LLMAnimateObject for preset animations like fadeIn, bounce, etc.
 - Common motion requests: "add a red circle", "animate this to fade in", "make it bounce", "add keyframe at 2 seconds".
 
+REMOTION CODE GENERATION:
+- If the user asks to create programmatic video content using code (e.g., "create an animated intro with code", "generate a video using Remotion", "write code for a video"), use WriteRemotionCode to generate TypeScript/React code using Remotion components.
+- The WriteRemotionCode function generates a code field that contains the complete TypeScript code.
+- The generated code should use Remotion components like: AbsoluteFill, Sequence, interpolate, useCurrentFrame, spring, delayRender, continueRender, etc.
+- Use @remotion/player for preview, @remotion/transitions for transitions like fade, wipe, slide, flip, iris.
+- The code should be a complete React component that can be rendered by Remotion.
+- Detect relevant skills from the description: animations, transitions, text_animations, shapes, audio, subtitles, lottie, three_d, etc.
+- Set duration_in_frames based on desired duration (e.g., 90 frames = 3 seconds at 30fps).
+- Default dimensions: 1920x1080, fps: 30.
+
 Conversation so far (oldest first): ${JSON.stringify(request.chat_history)}
 
 User message: ${request.message}
@@ -74,6 +84,7 @@ export async function callGeminiAI(request: CallGeminiAIParams): Promise<Functio
                   "LLMDeleteObject",
                   "LLMUpdateObject",
                   "LLMAnimateObject",
+                  "WriteRemotionCode",
                 ],
               },
               // Timeline operations
@@ -116,6 +127,12 @@ export async function callGeminiAI(request: CallGeminiAIParams): Promise<Functio
               duration: { type: "number" },
               // Update operations
               properties: { type: "object" },
+              // Remotion code generation
+              description: { type: "string" },
+              composition_name: { type: "string" },
+              duration_in_frames: { type: "number" },
+              fps: { type: "number" },
+              detected_skills: { type: "array", items: { type: "string" } },
             },
             required: ["function_name"],
           },

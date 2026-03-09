@@ -120,6 +120,18 @@ export const LLMAnimateObjectArgsSchema = z.object({
   easing: z.enum(["linear", "easeIn", "easeOut", "easeInOut", "spring", "bounce", "elastic"]).optional().describe("Easing function"),
 });
 
+// Remotion Code Generation Schema
+export const WriteRemotionCodeArgsSchema = z.object({
+  function_name: z.literal("WriteRemotionCode").describe("Generate TypeScript/React code using Remotion components for programmatic video creation"),
+  description: z.string().describe("Description of the video to generate (e.g., 'animated intro with bouncing text', 'fade transition between scenes')"),
+  composition_name: z.string().describe("Name for the composition (e.g., 'Intro', 'Outro', 'Transition')"),
+  duration_in_frames: z.number().describe("Duration of the video in frames (at 30fps)"),
+  width: z.number().optional().describe("Video width in pixels (default: 1920)"),
+  height: z.number().optional().describe("Video height in pixels (default: 1080)"),
+  fps: z.number().optional().describe("Frames per second (default: 30)"),
+  detected_skills: z.array(z.string()).optional().describe("Skills detected from the description that should be used in the code"),
+});
+
 export const FunctionCallResponseSchema = z.object({
   function_call: z
     .union([
@@ -134,6 +146,7 @@ export const FunctionCallResponseSchema = z.object({
       LLMDeleteObjectArgsSchema,
       LLMUpdateObjectArgsSchema,
       LLMAnimateObjectArgsSchema,
+      WriteRemotionCodeArgsSchema,
     ])
     .nullable()
     .optional(),
@@ -153,6 +166,7 @@ export type LLMApplyFilterArgs = z.infer<typeof LLMApplyFilterArgsSchema>;
 export type LLMDeleteObjectArgs = z.infer<typeof LLMDeleteObjectArgsSchema>;
 export type LLMUpdateObjectArgs = z.infer<typeof LLMUpdateObjectArgsSchema>;
 export type LLMAnimateObjectArgs = z.infer<typeof LLMAnimateObjectArgsSchema>;
+export type WriteRemotionCodeArgs = z.infer<typeof WriteRemotionCodeArgsSchema>;
 export type FunctionCallResponse = z.infer<typeof FunctionCallResponseSchema>;
 
 // Export the ChatMessage type for use in ChatBox

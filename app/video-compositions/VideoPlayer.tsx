@@ -202,6 +202,45 @@ export function TimelineComposition({
         );
         break;
       }
+      case "remotion_code": {
+        // Render Remotion code scrubber - show a placeholder with code preview
+        content = (
+          <AbsoluteFill
+            style={{
+              left: scrubber.left_player,
+              top: scrubber.top_player,
+              width: scrubber.width_player,
+              height: scrubber.height_player,
+              overflow: "hidden",
+              backgroundColor: "#1a1a2e",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <div style={{ 
+              color: "#00ff88", 
+              fontFamily: "monospace", 
+              fontSize: "12px",
+              padding: "20px",
+              textAlign: "center",
+              maxWidth: "100%",
+              overflow: "hidden"
+            }}>
+              <div style={{ fontWeight: "bold", marginBottom: "8px" }}>
+                {scrubber.remotionCode?.compositionName || "Remotion Code"}
+              </div>
+              <div style={{ opacity: 0.7, fontSize: "10px" }}>
+                {scrubber.remotionCode?.code ? "Code loaded" : "No code"}
+              </div>
+              <div style={{ marginTop: "8px", opacity: 0.5 }}>
+                {scrubber.remotionCode?.durationInFrames || 0} frames
+              </div>
+            </div>
+          </AbsoluteFill>
+        );
+        break;
+      }
       default:
         console.warn(`Unknown media type: ${scrubber.mediaType}`);
         break;
