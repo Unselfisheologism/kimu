@@ -1014,6 +1014,7 @@ export default function TimelineEditor() {
               <div className="h-full border-l border-border">
                 <ChatBox
                   mediaBinItems={mediaBinItems}
+                  setMediaBinItems={setMediaBinItems}
                   handleDropOnTrack={handleDropOnTrack}
                   isMinimized={false}
                   onToggleMinimize={() => setIsChatMinimized(true)}

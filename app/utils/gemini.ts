@@ -32,6 +32,49 @@ Inference rules:
 - For motion editing: Use LLMAddShape to add shapes, LLMCreateKeyframe for animations, LLMAnimateObject for preset animations like fadeIn, bounce, etc.
 - Common motion requests: "add a red circle", "animate this to fade in", "make it bounce", "add keyframe at 2 seconds".
 
+REMOTION CODE GENERATION (High-End Motion Graphics):
+- Use WriteRemotionCode when users want to create professional motion graphics programmatically.
+- This enables high-end SaaS/startup video production with code-based animations.
+- Detect skills from user description and include them in detected_skills array.
+
+Available skill categories:
+- typography: Kinetic text, title sequences, word animations, typewriter effects
+- spring-physics: Natural spring animations with damping/stiffness controls
+- transitions: Scene transitions using @remotion/transitions (fade, wipe, slide, flip, iris)
+- charts: Animated bar charts, line charts, pie charts, counters, data visualization
+- messaging: Chat UIs, mobile app screens, notification bubbles, cards
+- social-media: 9:16 vertical videos (TikTok/Reels), YouTube 16:9, platform-specific formats
+- 3d: Three.js integration, 3D objects, rotations, perspective transforms
+- sequencing: Complex timing, staggered animations, Sequence components
+- lottie: Lottie animation integration from JSON files
+- loops: Seamless looping backgrounds, continuous animations
+- product: Device mockups (phone/laptop), app demos, feature showcases
+- logo: Logo reveals, brand animations, letter-by-letter effects
+- backgrounds: Gradient animations, mesh gradients, particle effects
+- cta: Call-to-action buttons, end screens, subscribe prompts
+
+Code patterns to use:
+- useCurrentFrame() for frame-based animations
+- interpolate(inputRange, outputRange) for smooth value mapping
+- spring({ frame, fps, config: { damping, stiffness }}) for physics
+- Sequence from={frame} durationInFrames={n} for timing control
+- TransitionSeries for professional scene transitions
+
+Examples of requests that should trigger WriteRemotionCode:
+- "Create an animated intro with bouncing text"
+- "Make a promotional video for my startup"
+- "Generate a product demo animation"
+- "Create a kinetic typography title sequence"
+- "Add animated bar charts showing growth"
+- "Make a logo reveal animation"
+- "Create a smooth transition between scenes"
+
+When calling WriteRemotionCode:
+- Set duration_in_frames based on desired length (e.g., 180 frames = 6 seconds at 30fps)
+- Default composition settings: width=1920, height=1080, fps=30
+- Include all detected skills in the detected_skills array
+- The description should capture what the user wants to create
+
 Conversation so far (oldest first): ${JSON.stringify(request.chat_history)}
 
 User message: ${request.message}
@@ -74,6 +117,7 @@ export async function callGeminiAI(request: CallGeminiAIParams): Promise<Functio
                   "LLMDeleteObject",
                   "LLMUpdateObject",
                   "LLMAnimateObject",
+                  "WriteRemotionCode",
                 ],
               },
               // Timeline operations
@@ -116,6 +160,12 @@ export async function callGeminiAI(request: CallGeminiAIParams): Promise<Functio
               duration: { type: "number" },
               // Update operations
               properties: { type: "object" },
+              // Remotion code generation
+              description: { type: "string" },
+              composition_name: { type: "string" },
+              duration_in_frames: { type: "number" },
+              fps: { type: "number" },
+              detected_skills: { type: "array", items: { type: "string" } },
             },
             required: ["function_name"],
           },

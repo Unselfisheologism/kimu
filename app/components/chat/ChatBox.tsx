@@ -27,6 +27,8 @@ import {
   llmMoveScrubber,
   llmAddScrubberByName,
   llmDeleteScrubbersInTrack,
+  llmWriteRemotionCode,
+  llmAddRemotionCodeToMediaBin,
 } from "~/utils/llm-handler";
 
 // motion llm tools
@@ -54,6 +56,7 @@ interface Message {
 interface ChatBoxProps {
   className?: string;
   mediaBinItems: MediaBinItem[];
+  setMediaBinItems: (items: MediaBinItem[]) => void;
   handleDropOnTrack: (
     item: MediaBinItem,
     trackId: string,
@@ -71,6 +74,7 @@ interface ChatBoxProps {
 export function ChatBox({
   className = "",
   mediaBinItems,
+  setMediaBinItems,
   handleDropOnTrack,
   isMinimized = false,
   onToggleMinimize,
@@ -374,7 +378,7 @@ export function ChatBox({
               function_call.property,
               function_call.time,
               function_call.value,
-              function_call.easing,
+              function_call.easing || "linear",
               timelineState,
               handleUpdateScrubber
             );
@@ -417,8 +421,45 @@ export function ChatBox({
               handleUpdateScrubber
             );
             aiResponseContent = `✅ Applied ${function_call.animation_type} animation with ${keyframeIds.length} keyframes.`;
+          } else if (function_call.function_name === "WriteRemotionCode") {
+            // Import the enhanced Remotion skill system
+            const { generateRemotionCode, detectSkills, getSkillGuidance } = await import("~/remotion/skills");
+            
+            // Detect skills from description
+            const detectedSkills = function_call.detected_skills || detectSkills(function_call.description);
+            
+            // Generate comprehensive Remotion code using the skill system
+            const generatedCode = generateRemotionCode(
+              function_call.description,
+              function_call.composition_name,
+              function_call.duration_in_frames,
+              function_call.width || 1920,
+              function_call.height || 1080,
+              function_call.fps || 30
+            );
+            
+            // Create Remotion code data structure with generated code
+            const codeData = llmWriteRemotionCode(
+              function_call.description,
+              function_call.composition_name,
+              function_call.duration_in_frames,
+              function_call.width,
+              function_call.height,
+              function_call.fps,
+              detectedSkills
+            );
+            
+            // Store the generated code
+            codeData.code = generatedCode;
+            
+            // Add to media bin
+            llmAddRemotionCodeToMediaBin(codeData, setMediaBinItems, mediaBinItems);
+            
+            aiResponseContent = `✅ Created Remotion code composition "${function_call.composition_name}" (${function_call.duration_in_frames} frames) with skills: ${detectedSkills.join(', ')}. It's now in your media bin. You can drag it to the timeline to preview or edit the code.`;
           } else {
-            aiResponseContent = `❌ Unknown function: ${function_call.function_name}`;
+            // Handle any other function calls not covered above
+            const fnName = (function_call as { function_name?: string }).function_name || "unknown";
+            aiResponseContent = `❌ Unknown function: ${fnName}`;
           }
         } catch (error) {
           aiResponseContent = `❌ Error executing function: ${

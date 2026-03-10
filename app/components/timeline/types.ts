@@ -4,7 +4,7 @@ import type { MotionGraphicsData } from "~/types/motion";
 // base type for all scrubbers
 export interface BaseScrubber {
   id: string;
-  mediaType: "video" | "image" | "audio" | "text" | "groupped_scrubber" | "motion_graphics";
+  mediaType: "video" | "image" | "audio" | "text" | "groupped_scrubber" | "motion_graphics" | "remotion_code";
   mediaUrlLocal: string | null; // null for text
   mediaUrlRemote: string | null;
   media_width: number; // width of the media in pixels
@@ -21,6 +21,9 @@ export interface BaseScrubber {
 
   // Motion graphics data for motion_graphics scrubber type
   motionData?: MotionGraphicsData;
+
+  // Remotion code data for remotion_code scrubber type
+  remotionCode?: RemotionCodeData;
 }
 
 export interface Transition {
@@ -41,6 +44,18 @@ export interface TextProperties {
   textAlign: "left" | "center" | "right";
   fontWeight: "normal" | "bold";
   template: "normal" | "glassy" | null;          // template uses tiktok style pages. null for normal text. templates might override the text properties.
+}
+
+// Remotion code data for programmatic video generation
+export interface RemotionCodeData {
+  code: string; // The generated TypeScript/React code
+  compositionName: string; // Name of the composition
+  durationInFrames: number; // Duration in frames
+  width: number; // Video width
+  height: number; // Video height
+  fps: number; // Frames per second
+  detectedSkills: string[]; // Skills detected from the description
+  language: "typescript"; // Programming language
 }
 
 // state of the scrubber in the media bin

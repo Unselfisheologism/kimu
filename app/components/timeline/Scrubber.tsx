@@ -306,6 +306,7 @@ export const Scrubber: React.FC<ScrubberProps> = ({
       audio: "bg-blue-600 border-blue-400 text-white",
       groupped_scrubber: "bg-gray-600 border-gray-400 text-white",
       motion_graphics: "bg-pink-600 border-pink-500 text-white",
+      remotion_code: "bg-cyan-600 border-cyan-500 text-white",
     };
 
     const selectedColors = {
@@ -322,6 +323,8 @@ export const Scrubber: React.FC<ScrubberProps> = ({
         "bg-gray-600 border-gray-400 text-white ring-2 ring-gray-400/50",
       motion_graphics:
         "bg-pink-600 border-pink-400 text-white ring-2 ring-pink-400/50",
+      remotion_code:
+        "bg-cyan-600 border-cyan-400 text-white ring-2 ring-cyan-400/50",
     };
 
     const colorSet = isSelected ? selectedColors : baseColors;
